@@ -1,0 +1,38 @@
+name: Quality and tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      HF_HUB_OFFLINE: "1"
+      HF_HUB_DISABLE_TELEMETRY: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Lint
+        run: uv run --locked ruff check .
+      - name: Format check
+        run: uv run --locked ruff format --check .
+      - name: Type check
+        run: uv run --locked mypy src
+      - name: Tests with coverage
+        run: uv run --locked pytest --cov=film_transcriber --cov-report=term-missing --cov-report=xml
+      - name: Frontend synchronization tests
+        run: node --test tests/frontend/*.test.mjs

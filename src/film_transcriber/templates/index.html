@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Votre studio local de transcription vidéo. Écoutez, lisez et retrouvez chaque dialogue.">
+  <title>Réplique — Studio de transcription</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/style.css">
+  <script type="module" src="/static/app.mjs"></script>
+</head>
+<body data-max-upload-bytes="{{ max_upload_bytes|default(500000000) }}" data-max-scene-seconds="{{ max_scene_seconds|default(600) }}">
+  <a class="skip-link" href="#workspace">Aller au lecteur et à la transcription</a>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Réplique, accueil">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span>réplique<span class="brand-period">.</span></span>
+    </a>
+    <span class="header-caption">LE STUDIO DE VOS DIALOGUES</span>
+    <span class="local-badge"><span aria-hidden="true"></span>Traitement local</span>
+  </header>
+
+  <main class="main-shell">
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">VIDÉO → TEXTE</p>
+        <h1 id="page-title">La scène, mot pour mot.</h1>
+        <p class="intro-copy">Importez une vidéo. Retrouvez ses dialogues, au rythme de la lecture.</p>
+      </div>
+      <div class="history-controls">
+        <label for="history">Transcriptions de cette session</label>
+        <div class="history-row">
+          <select id="history" aria-label="Ouvrir une transcription de cette session">
+            <option value="">Nouvelle transcription</option>
+          </select>
+          <button class="icon-button" type="button" id="new-job" title="Nouvelle transcription" aria-label="Nouvelle transcription">+</button>
+        </div>
+      </div>
+    </section>
+
+    <form id="transcription-form" class="setup-card">
+      <div class="import-row">
+        <div class="step-label"><span>01</span><h2>Votre scène</h2></div>
+        <div id="drop-zone" class="drop-zone">
+          <input id="video-file" name="file" type="file" accept=".mp4,.mkv,.mov,.avi" class="file-input" aria-describedby="file-hint selected-file">
+          <label class="file-label" for="video-file">
+            <span class="upload-icon" aria-hidden="true">↥</span>
+            <span><strong id="selected-file">Choisir une vidéo</strong><span id="file-hint">ou la déposer ici · MP4, MKV, MOV, AVI · <span id="upload-limit">500 Mo max.</span></span></span>
+            <span class="browse-button" aria-hidden="true">Parcourir</span>
+          </label>
+        </div>
+      </div>
+      <div class="settings-row">
+        <fieldset class="scene-range">
+          <legend>Plage à transcrire <span>(facultatif)</span></legend>
+          <div class="range-fields">
+            <label for="start-seconds">Début <span class="number-wrap"><input id="start-seconds" name="start_seconds" type="number" min="0" step="0.01" value="0" inputmode="decimal"><span>s</span></span></label>
+            <span class="range-arrow" aria-hidden="true">→</span>
+            <label for="end-seconds">Fin <span class="number-wrap"><input id="end-seconds" name="end_seconds" type="number" min="0.01" step="0.01" placeholder="Fin vidéo" inputmode="decimal"><span>s</span></span></label>
+          </div>
+        </fieldset>
+        <div class="language-field"><label for="language">Langue des dialogues</label><select id="language" name="language"><option value="auto">Détection automatique</option><option value="fr">Français</option><option value="en">Anglais</option></select></div>
+        <details class="advanced-options">
+          <summary>Réglages</summary>
+          <div class="advanced-popover">
+            <label class="checkbox-label" for="vad-filter"><input id="vad-filter" name="vad_filter" type="checkbox" checked>Détecter les passages parlés</label>
+            <p>Écarte les silences avant la transcription.</p>
+            <label for="beam-size">Recherche de transcription (beam size)</label>
+            <input id="beam-size" name="beam_size" type="number" min="1" max="10" value="5">
+            <p>De 1 à 10. Une valeur élevée peut ralentir le traitement.</p>
+          </div>
+        </details>
+        <button id="transcribe" class="primary-button" type="submit" disabled>Transcrire la scène <span aria-hidden="true">↗</span></button>
+      </div>
+      <div class="setup-footnote"><span id="scene-limit">Scène de 10 minutes maximum.</span><span>Vos fichiers restent sur cet ordinateur.</span></div>
+    </form>
+
+    <div id="notice" class="notice" role="alert" hidden></div>
+    <noscript><p class="notice">Activez JavaScript pour importer une vidéo et synchroniser les dialogues.</p></noscript>
+
+    <section id="workspace" class="workspace" aria-label="Lecteur vidéo et transcription synchronisée" tabindex="-1">
+      <article class="video-panel panel" aria-labelledby="video-heading">
+        <div class="panel-heading"><div><p class="eyebrow">02 / LECTURE</p><h2 id="video-heading">Aperçu vidéo</h2></div><span id="video-duration" class="small-meta">—</span></div>
+        <div class="video-stage">
+          <video id="video" controls preload="metadata" playsinline aria-label="Lecteur de votre vidéo" hidden></video>
+          <div id="video-placeholder" class="video-placeholder">
+            <div class="film-frame" aria-hidden="true"><span>▶</span></div>
+            <p>Tout commence par une scène.</p>
+            <span>Votre vidéo apparaîtra ici.</span>
+          </div>
+        </div>
+        <p id="video-warning" class="video-warning" hidden>Ce format ne peut pas être lu par votre navigateur. La transcription reste possible. Pour le suivi synchronisé, utilisez une vidéo MP4 compatible.</p>
+        <div class="video-bottom"><span class="status-dot" aria-hidden="true"></span><p id="video-context">Sélectionnez une vidéo pour préparer votre transcription.</p></div>
+      </article>
+
+      <article class="transcript-panel panel" aria-labelledby="transcript-heading">
+        <div class="panel-heading"><div><p class="eyebrow">03 / DIALOGUES</p><h2 id="transcript-heading">Transcription</h2></div><span id="job-status" class="status-badge">En attente</span></div>
+        <div class="transcript-toolbar"><span id="transcript-meta" class="small-meta">Le texte suivra votre vidéo</span><label class="follow-toggle" for="auto-follow"><input type="checkbox" id="auto-follow" checked>Suivi auto</label></div>
+        <div id="transcript-scroll" class="transcript-scroll" tabindex="0" aria-label="Dialogues horodatés, zone de défilement">
+          <div id="transcript-placeholder" class="transcript-placeholder">
+            <span class="quote-mark" aria-hidden="true">“</span>
+            <h3>Chaque réplique à sa place.</h3>
+            <p>Lancez une transcription pour retrouver ici les dialogues et leurs repères temporels.</p>
+            <span class="empty-rule" aria-hidden="true"></span>
+            <p class="empty-tip">Pendant la lecture, le passage en cours sera mis en évidence.</p>
+          </div>
+          <div id="processing-state" class="processing-state" hidden>
+            <div class="processing-symbol" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+            <h3 id="processing-title">Préparation de votre scène</h3>
+            <p id="processing-description">Le traitement est en cours sur votre ordinateur.</p>
+            <progress id="processing-progress" aria-label="Traitement en cours"></progress>
+            <p class="processing-note">Le temps nécessaire dépend de la durée de la scène et de votre ordinateur.</p>
+          </div>
+          <ol id="segments" class="segments" aria-label="Segments de la transcription" hidden></ol>
+        </div>
+        <div class="export-bar"><span>Exporter</span><div class="export-links" aria-label="Télécharger la transcription"><a id="export-txt" aria-disabled="true" tabindex="-1">TXT <span aria-hidden="true">↓</span></a><a id="export-srt" aria-disabled="true" tabindex="-1">SRT <span aria-hidden="true">↓</span></a><a id="export-json" aria-disabled="true" tabindex="-1">JSON <span aria-hidden="true">↓</span></a></div></div>
+      </article>
+    </section>
+
+    <div class="workspace-footer"><p id="sync-note">Les repères du texte sont relatifs au début de la scène.</p><button id="delete-job" class="text-button danger-button" type="button" hidden>Supprimer cette transcription</button></div>
+    <p id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+  </main>
+  <footer class="site-footer"><span>RÉPLIQUE <span class="footer-separator">/</span> STUDIO LOCAL</span><span>Écouter. Lire. Retrouver.</span></footer>
+</body>
+</html>

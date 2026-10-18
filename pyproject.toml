@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "film-transcriber"
+version = "0.1.0"
+description = "Transcription locale de scènes vidéo avec lecture synchronisée"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn>=0.34,<1", "pydantic>=2.10,<3",
+  "pydantic-settings>=2.7,<3", "jinja2>=3.1.6,<4", "python-multipart>=0.0.20,<1",
+  "faster-whisper>=1.1,<2", "av>=11,<19",
+]
+
+[project.scripts]
+film-transcriber = "film_transcriber.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.3,<10", "pytest-cov>=6,<8", "httpx>=0.28,<1", "ruff>=0.11,<1", "mypy>=1.15,<2", "pre-commit>=4,<5"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/film_transcriber"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = [".uv-cache", ".tools", ".models", ".runtime", "artifacts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["faster_whisper.*", "ctranslate2.*", "huggingface_hub.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = ["ffmpeg: requires local FFmpeg and ffprobe executables"]
+
+[tool.coverage.run]
+source = ["film_transcriber"]
+omit = ["*/cli.py", "*/main.py"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80
